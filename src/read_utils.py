@@ -3,18 +3,9 @@ import pandas as pd
 import os
 from PIL import Image
 
-def read_from_csv(f):
-    df = pd.read_csv(f)
-    labels = df[df['Usage'] == 'Training']['emotion'].tolist()
-    pixels = df[df['Usage'] == 'Training']['pixels']
-    #print(pixels)
-    pixels_list = [[int(a) for a in i.split(" ")] for i in pixels]
-    print(len(pixels_list), len(pixels_list[0]))
-    #pixels = pixels.to_numpy()
-    print(df)
-    return pixels, labels
+from src.coding_utils import bernoulli_coding, population_encoding, poisson_coding
 
-def read_numpy_fer_data(save_root, num_sample, image_size):
+def read_numpy_fer_data(save_root, num_sample, image_size=48, mode='train'):
     """
     Read saved numpy MNIST data
     Args:
@@ -27,7 +18,7 @@ def read_numpy_fer_data(save_root, num_sample, image_size):
     This function is complete. You do not need to do anything here.
     """
     image_list = np.zeros((num_sample, image_size, image_size))
-    file_names = os.listdir('data/train/happy')[:num_sample]
+    file_names = os.listdir('data/{}/sad'.format(mode))[:num_sample]
     label_list = []
     for ii in range(num_sample):
         image_list[ii] = np.asarray(Image.open(save_root + '/' + file_names[ii]))
@@ -53,9 +44,11 @@ def img_2_event_img(image, snn_timestep):
     image = image.reshape(batch_size, image_size, image_size, 1)
     
     #Generate a random image of the shape batch_size x image_size x image_size x snn_timestep. Numpy random rand function will be useful here. 
-    random_image = np.random.rand(batch_size, image_size, image_size, snn_timestep)
+    # random_image = np.random.rand(batch_size, image_size, image_size, snn_timestep)
+    # event_image = np.where(image >= random_image, 1, 0)
 
-    #Generate the event image - ENCODING here
-    event_image = np.where(image >= random_image, 1, 0)
+    event_image = np.zeros((batch_size, image_size, image_size, snn_timestep))
+    for idx in range(len(image[0])):
+        event_image[idx, :, :, :] = poisson_coding(image[idx, :, :, :], snn_timestep)
 
     return event_image

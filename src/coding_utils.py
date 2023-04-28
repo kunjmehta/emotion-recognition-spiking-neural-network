@@ -314,10 +314,10 @@ def bernoulli_coding(image, time_steps = 100):
     # Normalize the pixel values
     image = image / 255.0
     # Generate spike train using Bernoulli distribution
-    spike_train = np.zeros((time_steps, len(image)))
+    spike_train = np.zeros((len(image), time_steps))
     for i in range(time_steps):
-        spike_train[i] = np.random.binomial(1, image)
-    return spike_train
+        spike_train[:, i] = np.random.binomial(1, image)
+    return np.reshape(spike_train / np.max(spike_train), (48, 48, -1))
 
 def poisson_coding(image, time_steps = 100):
     """
@@ -334,7 +334,7 @@ def poisson_coding(image, time_steps = 100):
     # Normalize the pixel values
     image = image / 255.0
     # Generate spike train using Poisson distribution
-    spike_train = np.zeros((time_steps, len(image)))
+    spike_train = np.zeros((len(image), time_steps))
     for i in range(time_steps):
-        spike_train[i] = np.random.poisson(image)
-    return spike_train / np.max(spike_train)
+        spike_train[:, i] = np.random.poisson(image)
+    return np.reshape(spike_train / np.max(spike_train), (48, 48, -1))
