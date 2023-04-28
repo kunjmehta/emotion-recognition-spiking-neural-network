@@ -1,4 +1,13 @@
-def test_snn_with_ck(network, data_save_dir, data_sample_num):
+import numpy as np
+
+def test_snn_with_fer_one_instance(network, img, img_size=48):
+    img = np.reshape(img, (img_size * img_size, -1))
+    predicted_output = network(img)
+    predicted_class = np.argmax(predicted_output)
+
+    return predicted_output, predicted_class
+
+def test_snn_with_fer(network, data_save_dir, data_sample_num):
     """
     Test SNN with MNIST test data
     Args:

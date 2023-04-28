@@ -14,7 +14,7 @@ def hebbian_oja(network, train_data, lr=1e-5, epochs=10):
     
     #iterate over the epochs
     for _ in range(epochs):
-        weight_increment = np.zeros((1,2))
+        weight_increment = np.zeros((2, 2304))
         #iterate over all samples in train_data
         for data in train_data:
             

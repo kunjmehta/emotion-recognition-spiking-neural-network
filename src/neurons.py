@@ -43,6 +43,7 @@ class Connections:
             pre_dimension (int): dimension for pre-synaptic neurons
             post_dimension (int): dimension for post-synaptic neurons
         """
+        print(weights.shape)
         self.weights = weights
         self.pre_dimension = pre_dimension
         self.post_dimension = post_dimension

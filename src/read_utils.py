@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import os
+from PIL import Image
 
 def read_from_csv(f):
     df = pd.read_csv(f)
@@ -12,7 +14,7 @@ def read_from_csv(f):
     print(df)
     return pixels, labels
 
-def read_numpy_mnist_data(save_root, num_sample):
+def read_numpy_fer_data(save_root, num_sample, image_size):
     """
     Read saved numpy MNIST data
     Args:
@@ -24,12 +26,12 @@ def read_numpy_mnist_data(save_root, num_sample):
     
     This function is complete. You do not need to do anything here.
     """
-    image_list = np.zeros((num_sample, 640, 490))
-    label_list = [0, 0, 1, 1]
-    # for ii in range(num_sample):
-    #     image_label = pickle.load(open(save_root + '/' + str(ii) + '.p', 'rb'))
-    #     image_list[ii] = image_label[0]
-    #     label_list.append(image_label[1])
+    image_list = np.zeros((num_sample, image_size, image_size))
+    file_names = os.listdir('data/train/happy')[:num_sample]
+    label_list = []
+    for ii in range(num_sample):
+        image_list[ii] = np.asarray(Image.open(save_root + '/' + file_names[ii]))
+        label_list.append(1)
 
     return image_list, label_list
 
@@ -46,14 +48,14 @@ def img_2_event_img(image, snn_timestep):
     """
     
     #Reshape the image. Do not touch this code
-    batch_size = 32
-    image_size = 48 * 48
-    #image = image.reshape(batch_size, image_size, image_size, 1)
+    batch_size = image.shape[0]
+    image_size = image.shape[2]
+    image = image.reshape(batch_size, image_size, image_size, 1)
     
     #Generate a random image of the shape batch_size x image_size x image_size x snn_timestep. Numpy random rand function will be useful here. 
     random_image = np.random.rand(batch_size, image_size, image_size, snn_timestep)
 
-    #Generate the event image
+    #Generate the event image - ENCODING here
     event_image = np.where(image >= random_image, 1, 0)
-    
+
     return event_image
