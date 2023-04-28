@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import poisson
+from scipy.stats import poisson, bernoulli
 
 def poisson_encoding(image, intensity=1.0, time_step=0.001, refractory_period=0.002):
     """
@@ -159,6 +159,90 @@ def population_encoding(image, num_neurons=100, max_rate=100, time_step=0.001):
         spike_trains.append(poisson_spike_train)
     
     return np.array(spike_trains)
+
+#################################################################################################################################
+
+def encode_bernoulli(image, time_bin, spike_prob):
+    # Compute the number of time bins
+    num_time_bins = int(np.ceil(image.size / spike_prob))
+
+    # Reshape the image into a 1D array
+    image = image.ravel()
+
+    # Initialize the spike train
+    spike_train = np.zeros((num_time_bins, image.size), dtype=np.uint8)
+
+    # Generate spikes using Bernoulli coding
+    for i in range(num_time_bins):
+        # Generate random Bernoulli spikes for each pixel
+        spikes = bernoulli.rvs(spike_prob, size=image.size)
+
+        # Set the pixel value based on the Bernoulli spikes
+        pixel_values = spikes * image
+
+        # Add the pixel values to the spike train
+        spike_train[i] = pixel_values
+
+    return spike_train.astype(np.uint8)
+
+def decode_bernoulli(spike_train):
+    # Compute the number of time bins
+    num_time_bins = spike_train.shape[0]
+
+    # Reshape the spike train into a 2D array
+    spike_train = spike_train.reshape(num_time_bins, -1)
+
+    # Initialize the decoded image
+    decoded_image = np.zeros(spike_train.shape[1], dtype=np.uint8)
+
+    # Decode the spike train using inverse Bernoulli coding
+    for i in range(num_time_bins):
+        # Find the indices of pixels that fired spikes
+        indices = np.nonzero(spike_train[i])[0]
+
+        # Set the pixel values to the mean of the Bernoulli distribution
+        decoded_image[indices] = int(np.round(np.mean(spike_train[i, indices])))
+
+    # Reshape the decoded image to the original shape
+    decoded_image = decoded_image.reshape(-1, spike_train.shape[1] // decoded_image.shape[0])
+
+    return decoded_image
+
+
+def encode_temporal(image, threshold=128, duration=10):
+    # Convert the image to a 1D array
+    image = image.flatten()
+
+    # Initialize the spike train
+    spike_train = np.zeros((len(image), duration), dtype=int)
+
+    # Encode the image using temporal coding
+    for i in range(len(image)):
+        if image[i] > threshold:
+            spike_train[i, :] = 1
+
+    return spike_train
+
+def decode_temporal(spike_train):
+    # Compute the number of neurons and time bins
+    num_neurons, _ = spike_train.shape
+
+    # Initialize the decoded image
+    decoded_image = np.zeros(num_neurons, dtype=np.uint8)
+
+    # Decode the spike train using temporal decoding
+    for i in range(num_neurons):
+        # Compute the indices of time bins where the neuron spiked
+        indices = np.where(spike_train[i, :] > 0)[0]
+
+        # Set the pixel value to the mean of the spike times
+        if len(indices) > 0:
+            decoded_image[i] = int(np.round(np.mean(indices)))
+
+    # Reshape the decoded image to the original shape
+    decoded_image = decoded_image.reshape(-1, spike_train.shape[0])
+
+    return decoded_image
 
 
 def decode(spikes):
