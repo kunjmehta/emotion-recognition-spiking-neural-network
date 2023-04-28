@@ -185,6 +185,30 @@ def encode_bernoulli(image, time_bin, spike_prob):
 
     return spike_train.astype(np.uint8)
 
+def encode_bernoulli(image, spike_prob):
+    # Compute the number of time bins
+    num_time_bins = int(np.ceil(image.size / spike_prob))
+
+    # Reshape the image into a 1D array
+    image = image.ravel()
+
+    # Initialize the spike train
+    spike_train = np.zeros((num_time_bins, image.size), dtype=np.uint8)
+
+    # Generate spikes using Bernoulli coding
+    for i in range(num_time_bins):
+        # Generate random Bernoulli spikes for each pixel
+        spikes = bernoulli.rvs(spike_prob, size=image.size)
+
+        # Set the pixel value based on the Bernoulli spikes
+        pixel_values = np.where(spikes == 1, image, 0)
+
+        # Add the pixel values to the spike train
+        spike_train[i] = pixel_values
+
+    return spike_train.astype(np.uint8)
+
+
 def decode_bernoulli(spike_train):
     # Compute the number of time bins
     num_time_bins = spike_train.shape[0]
@@ -244,6 +268,73 @@ def decode_temporal(spike_train):
 
     return decoded_image
 
+##################################################################################################################################
 
-def decode(spikes):
-    pass
+def encode_population(image, num_neurons=100, threshold=128):
+    # Convert the image to a 1D array
+    image = image.flatten()
+
+    # Initialize the spike train
+    spike_train = np.zeros((num_neurons, len(image)), dtype=int)
+
+    # Generate random receptive fields for the neurons
+    receptive_fields = np.random.normal(loc=threshold, scale=threshold/2, size=num_neurons)
+
+    # Encode the image using population coding
+    for i in range(num_neurons):
+        neuron_activity = (image - receptive_fields[i]) / threshold
+        spike_train[i, :] = (neuron_activity > 0).astype(int)
+
+    return spike_train
+
+def decode_population(spike_train, threshold=128):
+    # Compute the receptive fields for the neurons
+    receptive_fields = np.mean(threshold * spike_train, axis=1)
+
+    # Compute the decoded image by summing over the neuron activities
+    decoded_image = np.sum(spike_train - receptive_fields[:, np.newaxis], axis=0)
+
+    # Reshape the decoded image to its original shape
+    decoded_image = decoded_image.reshape((-1, spike_train.shape[1]))
+
+    return decoded_image
+
+def bernoulli_coding(image, time_steps = 100):
+    """
+    Encode an input grayscale image into a spike train using Bernoulli coding.
+    Args:
+        image (numpy.ndarray): A grayscale image represented as a 2D numpy array.
+        time_steps (int): The number of time steps to generate spike trains for.
+    Returns:
+        numpy.ndarray: A spike train represented as a 2D numpy array where each row represents a time step 
+        and each column represents a pixel in the original image.
+    """
+    # Flatten the image
+    image = image.flatten()
+    # Normalize the pixel values
+    image = image / 255.0
+    # Generate spike train using Bernoulli distribution
+    spike_train = np.zeros((time_steps, len(image)))
+    for i in range(time_steps):
+        spike_train[i] = np.random.binomial(1, image)
+    return spike_train
+
+def poisson_coding(image, time_steps = 100):
+    """
+    Encode an input grayscale image into a spike train using Poisson coding.
+    Args:
+        image (numpy.ndarray): A grayscale image represented as a 2D numpy array.
+        time_steps (int): The number of time steps to generate spike trains for.
+    Returns:
+        numpy.ndarray: A spike train represented as a 2D numpy array where each row represents a time step 
+        and each column represents a pixel in the original image.
+    """
+    # Flatten the image
+    image = image.flatten()
+    # Normalize the pixel values
+    image = image / 255.0
+    # Generate spike train using Poisson distribution
+    spike_train = np.zeros((time_steps, len(image)))
+    for i in range(time_steps):
+        spike_train[i] = np.random.poisson(image)
+    return spike_train / np.max(spike_train)
